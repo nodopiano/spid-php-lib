@@ -19,7 +19,11 @@ class Settings
         'sp_attributeconsumingservice' => self::NOT_REQUIRED,
         'sp_org_name' => self::NOT_REQUIRED,
         'sp_org_display_name' => self::NOT_REQUIRED,
-        'sp_key_cert_values' => [ 
+        'sp_contact_ipa_code' => self::REQUIRED,
+        'sp_contact_fiscal_code' => self::NOT_REQUIRED,
+        'sp_contact_email' => self::REQUIRED,
+        'sp_contact_phone' => self::NOT_REQUIRED,
+        'sp_key_cert_values' => [
             self::NOT_REQUIRED => [
                 'countryName' => self::REQUIRED,
                 'stateOrProvinceName' => self::REQUIRED,
@@ -85,7 +89,7 @@ class Settings
 
         $invalidFields = array_diff_key($settings, self::$validSettings);
         // Check for settings that have child values
-        array_walk(self::$validSettings, function($v, $k) use (&$invalidFields) {
+        array_walk(self::$validSettings, function ($v, $k) use (&$invalidFields) {
             // Child values found, check if settings array is set for that key
             if (is_array($v) && isset($settings[$k])) {
                 // $v has at most 2 keys, self::REQUIRED and self::NOT_REQUIRED
@@ -111,7 +115,7 @@ class Settings
             $k = $file;
         } else {
             if (!is_readable($file)) {
-                throw new \Exception('File '.$file.' is not readable. Please check file permissions.');
+                throw new \Exception('File ' . $file . ' is not readable. Please check file permissions.');
             }
             $k = file_get_contents($file);
         }
@@ -148,7 +152,7 @@ class Settings
                 }
                 array_walk($acs, function ($field) {
                     if (!in_array($field, self::$validAttributeFields)) {
-                        throw new \InvalidArgumentException('Invalid Attribute field '. $field .' requested');
+                        throw new \InvalidArgumentException('Invalid Attribute field ' . $field . ' requested');
                     }
                 });
             });
@@ -185,9 +189,11 @@ class Settings
                 throw new \InvalidArgumentException('sp_singlelogoutservice array elements should contain 2 string values,\
                     in order SLO Location and Binding');
             }
-            if (strcasecmp($slo[1], "POST") != 0 &&
+            if (
+                strcasecmp($slo[1], "POST") != 0 &&
                 strcasecmp($slo[1], "REDIRECT") != 0 &&
-                strcasecmp($slo[1], "") != 0) {
+                strcasecmp($slo[1], "") != 0
+            ) {
                 throw new \InvalidArgumentException('sp_singlelogoutservice elements Binding value should be one of\
                     "POST", "REDIRECT", or "" (empty string, defaults to POST)');
             }
@@ -213,12 +219,12 @@ class Settings
             }
         }
         if (isset($settings['accepted_clock_skew_seconds'])) {
-          if (!is_numeric($settings['accepted_clock_skew_seconds'])) {
-            throw new \Exception('accepted_clock_skew_seconds should be a number');
-          }
-          if ($settings['accepted_clock_skew_seconds'] < 0) {
-            throw new \Exception('accepted_clock_skew_seconds should be greater than 0');
-          }
+            if (!is_numeric($settings['accepted_clock_skew_seconds'])) {
+                throw new \Exception('accepted_clock_skew_seconds should be a number');
+            }
+            if ($settings['accepted_clock_skew_seconds'] < 0) {
+                throw new \Exception('accepted_clock_skew_seconds should be greater than 0');
+            }
         }
     }
 }

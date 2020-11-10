@@ -42,7 +42,7 @@ class Saml implements SAMLInterface
         return $idp;
     }
 
-    public function getIdpList() : array
+    public function getIdpList(): array
     {
         $files = glob($this->settings['idp_metadata_folder'] . "*.xml");
 
@@ -50,7 +50,7 @@ class Saml implements SAMLInterface
             $mapping = array();
             foreach ($files as $filename) {
                 $idp = $this->loadIdpFromFile($filename);
-                
+
                 $mapping[basename($filename, ".xml")] = $idp->metadata['idpEntityId'];
             }
             return $mapping;
@@ -70,7 +70,7 @@ class Saml implements SAMLInterface
             <error>Your SP certificate file is not readable. Please check file permissions.</error>
 XML;
         }
-        
+
         $entityID = htmlspecialchars($this->settings['sp_entityid'], ENT_XML1);
         $id = preg_replace('/[^a-z0-9_-]/', '_', $entityID);
         $cert = Settings::cleanOpenSsl($this->settings['sp_cert_file']);
@@ -80,7 +80,7 @@ XML;
         $attrcsArray = $this->settings['sp_attributeconsumingservice'] ?? array();
 
         $xml = <<<XML
-<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="$entityID" ID="$id">
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" xmlns:spid="https://spid.gov.it/saml-extensions" entityID="$entityID" ID="$id">
     <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol" AuthnRequestsSigned="true" WantAssertionsSigned="true">
         <md:KeyDescriptor use="signing">
             <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
@@ -89,7 +89,7 @@ XML;
         </md:KeyDescriptor>
 XML;
         foreach ($sloLocationArray as $slo) {
-            
+
             $location = htmlspecialchars($slo[0], ENT_XML1);
             $binding = $slo[1];
             if (strcasecmp($binding, "POST") === 0 || strcasecmp($binding, "") === 0) {
@@ -141,6 +141,24 @@ XML;
 </md:Organization>
 XML;
         }
+        $ipaCode = $this->settings['sp_contact_ipa_code'];
+        $emailAddress = $this->settings['sp_contact_email'];
+        $telephoneNumber = $this->settings['sp_contact_phone'] ?? false;
+        $fiscalCode = $this->settings['sp_contact_fiscal_code'] ?? false;
+
+        $xml .= '<md:ContactPerson contactType="other">';
+        $xml .= '<md:Extensions>';
+        $xml .= "<spid:IPACode>$ipaCode</spid:IPACode>";
+        $xml .= '<spid:Public/>';
+        if ($fiscalCode) {
+            $xml .= "<spid:FiscalCode>$fiscalCode</spid:FiscalCode>";
+        }
+        $xml .= '</md:Extensions>';
+        $xml .= "<md:EmailAddress>$emailAddress</md:EmailAddress>";
+        if ($telephoneNumber) {
+            $xml .= "<md:TelephoneNumber>$telephoneNumber</md:TelephoneNumber>";
+        }
+        $xml .= '</md:ContactPerson>';
         $xml .= '</md:EntityDescriptor>';
 
         return SignatureUtils::signXml($xml, $this->settings);
@@ -164,7 +182,8 @@ XML;
         return $this->baseLogin(Settings::BINDING_POST, ...$args);
     }
 
-    private function baseLogin($binding, $idpName, $assertId, $attrId, $level = 1, $redirectTo = null, $shouldRedirect = true) {
+    private function baseLogin($binding, $idpName, $assertId, $attrId, $level = 1, $redirectTo = null, $shouldRedirect = true)
+    {
         if ($this->isAuthenticated()) {
             return false;
         }
@@ -183,7 +202,7 @@ XML;
         return $idp->authnRequest($assertId, $attrId, $binding, $level, $redirectTo, $shouldRedirect);
     }
 
-    public function isAuthenticated() : bool
+    public function isAuthenticated(): bool
     {
         $selectedIdp = $_SESSION['idpName'] ?? $_SESSION['spidSession']['idp'] ?? null;
         if (is_null($selectedIdp)) {
@@ -229,17 +248,17 @@ XML;
         return $idp->logoutRequest($this->session, $slo, $binding, $redirectTo, $shouldRedirect);
     }
 
-    public function getAttributes() : array
+    public function getAttributes(): array
     {
         if ($this->isAuthenticated() === false) {
             return array();
         }
         return isset($this->session->attributes) && is_array($this->session->attributes) ? $this->session->attributes : array();
     }
-    
+
     // returns true if the SP certificates are found where the settings says they are, and they are valid
     // (i.e. the library has been configured correctly
-    private function isConfigured() : bool
+    private function isConfigured(): bool
     {
         if (!is_readable($this->settings['sp_key_file'])) {
             return false;
