@@ -5,7 +5,7 @@
 [![SPID on forum.italia.it](https://img.shields.io/badge/Forum-SPID-blue.svg)](https://forum.italia.it/c/spid)
 [![Build Status](https://travis-ci.org/italia/spid-php-lib.svg?branch=master)](https://travis-ci.org/italia/spid-php-lib)
 
->  **CURRENT VERSION: v0.33**
+>  **CURRENT VERSION: v0.35**
 
 # spid-php-lib
 PHP package for SPID authentication.
@@ -30,26 +30,28 @@ Alternatives for other languages:
 Table of Contents
 =================
 
-* [Repository layout](#repository-layout)
-* [Getting started](#getting-started)
-    * [Prerequisites](#prerequisites)
-    * [Configuring & Installing](#configuring-and-installing)
-    * [Usage](#usage)
-        * [Performing login](#performing-login)
-        * [Performing logout](#performing-logout)
-        * [Complete API](#complete-api)
-    * [Example](#example)
-        * [Demo application](#demo-application)
-* [Features](#features)
-    * [More features](#more-features)
-* [Troubleshooting](#troubleshooting)
-* [Testing](#testing)
-    * [Unit Tests](#unit-tests)
-    * [Linting](#linting)
-* [Contributing](#contributing)
-* [See also](#see-also)
-* [Authors](#authors)
-* [License](#license)
+- [spid-php-lib](#spid-php-lib)
+- [Table of Contents](#table-of-contents)
+  - [Repository layout](#repository-layout)
+  - [Getting Started](#getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Configuring and Installing](#configuring-and-installing)
+    - [Usage](#usage)
+      - [Performing login](#performing-login)
+      - [Performing logout](#performing-logout)
+      - [Complete API](#complete-api)
+    - [Example](#example)
+      - [Demo application](#demo-application)
+  - [Features](#features)
+    - [More features](#more-features)
+  - [Troubleshooting](#troubleshooting)
+  - [Testing](#testing)
+    - [Unit tests](#unit-tests)
+    - [Linting](#linting)
+  - [Contributing](#contributing)
+  - [See also](#see-also)
+  - [Authors](#authors)
+  - [License](#license)
 
 
 ## Repository layout
@@ -122,6 +124,7 @@ $settings = array(
     'sp_entityid' => SP_BASE_URL, // preferred: https protocol, no trailing slash, example: https://sp.example.com/
     'sp_key_file' => '/path/to/sp.key',
     'sp_cert_file' => '/path/to/sp.crt',
+    'sp_comparison' => 'exact', // one of: "exact", "minimum", "better" or "maximum"
     'sp_assertionconsumerservice' => [
         // order is important ! the 0-base index in this array will be used as ID in the calls
         SP_BASE_URL . '/acs',
@@ -150,8 +153,9 @@ $settings = array(
         ...
     ],
     // Time in seconds of skew that is acceptable between client and server when checking OnBefore and NotOnOrAfter
-    // assertion condition validity timestamps. Default is 0
-    'accepted_clock_skew_seconds' => 3600
+    // assertion condition validity timestamps, and IssueInstant response / assertion timestamps. Optional.
+    // Default is 0. Acceptable range: 0-300 (inclusive)
+    'accepted_clock_skew_seconds' => 100
 );
 ```
 
@@ -262,6 +266,7 @@ A Docker-based demo application is available at [https://github.com/simevo/spid-
 |:---|:---|
 |**Metadata:**||
 |parsing of IdP XML metadata (1.2.2.4)|✓|
+|support for multiple signing certificates in IdP XML metadata (1.2.2.4)||
 |parsing of AA XML metadata (2.2.4)||
 |SP XML metadata generation (1.3.2)|✓|
 |**AuthnRequest generation (1.2.2.1):**||
@@ -272,7 +277,7 @@ A Docker-based demo application is available at [https://github.com/simevo/spid-
 |`AssertionConsumerServiceIndex` customization|✓|
 |`AttributeConsumingServiceIndex` customization|✓|
 |`AuthnContextClassRef` (SPID level) customization|✓|
-|`RequestedAuthnContext/@Comparison` customization||
+|`RequestedAuthnContext/@Comparison` customization|✓|
 |`RelayState` customization (1.2.2)|✓|
 |**Response/Assertion parsing**||
 |verification of `Signature` value (if any)|✓|
@@ -391,6 +396,6 @@ Lorenzo Cattaneo and Paolo Greppi, simevo s.r.l.
 
 ## License
 
-Copyright (c) 2018, Developers Italia
+Copyright (c) 2018-2020, Developers Italia
 
 License: BSD 3-Clause, see [LICENSE](LICENSE) file.
